@@ -1,88 +1,660 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>متجر النجمة - شات بوت</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<!DOCTYPE html>  <html lang="ar" dir="rtl">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
+  <title>متجر النجمة - شات بوت</title>  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />  
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />  
+  <!-- EmailJS -->  
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>  
+  <style>  
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }  :root {  
+  --bg:        #0f0c1e;  
+  --surface:   #1a1535;  
+  --card:      #221d42;  
+  --accent:    #7c5cfc;  
+  --accent2:   #c084fc;  
+  --gold:      #f9c846;  
+  --text:      #e8e2ff;  
+  --muted:     #8b80b8;  
+  --bot-bg:    #2a2350;  
+  --user-bg:   linear-gradient(135deg,#7c5cfc,#c084fc);  
+  --radius:    18px;  
+  --shadow:    0 8px 32px rgba(124,92,252,.18);  
+}  
 
-  <link rel="stylesheet" href="style.css">
-</head>
+body {  
+  font-family: 'Tajawal', sans-serif;  
+  background: var(--bg);  
+  color: var(--text);  
+  min-height: 100vh;  
+  display: flex;  
+  flex-direction: column;  
+  align-items: center;  
+  justify-content: center;  
+  padding: 16px;  
+}  
 
-<body>
+/* ===== HEADER ===== */  
+.header {  
+  width: 100%;  
+  max-width: 680px;  
+  display: flex;  
+  align-items: center;  
+  gap: 14px;  
+  padding: 18px 24px;  
+  background: var(--surface);  
+  border-radius: var(--radius) var(--radius) 0 0;  
+  border-bottom: 1px solid rgba(124,92,252,.25);  
+}  
+.header-avatar {  
+  width: 52px; height: 52px;  
+  background: var(--user-bg);  
+  border-radius: 50%;  
+  display: flex; align-items: center; justify-content: center;  
+  font-size: 26px;  
+  flex-shrink: 0;  
+  box-shadow: 0 0 18px rgba(124,92,252,.45);  
+}  
+.header-info h1 { font-size: 1.2rem; font-weight: 800; }  
+.header-info p  { font-size: .82rem; color: var(--muted); margin-top: 2px; }  
+.status-dot {  
+  width: 9px; height: 9px;  
+  background: #4ade80;  
+  border-radius: 50%;  
+  display: inline-block;  
+  margin-left: 5px;  
+  animation: pulse 1.6s infinite;  
+}  
+@keyframes pulse {  
+  0%,100% { opacity:1; transform:scale(1); }  
+  50%      { opacity:.5; transform:scale(1.3); }  
+}  
 
-<div class="header">
-  <div class="header-avatar">🛍️</div>
-  <div class="header-info">
-    <h1>متجر النجمة ⭐</h1>
-    <p><span class="status-dot"></span> متصل الآن — مساعدك الذكي في خدمتك</p>
-  </div>
-</div>
+/* ===== CHAT WINDOW ===== */  
+.chat-window {  
+  width: 100%;  
+  max-width: 680px;  
+  height: 520px;  
+  background: var(--surface);  
+  overflow-y: auto;  
+  padding: 24px 20px;  
+  display: flex;  
+  flex-direction: column;  
+  gap: 14px;  
+  scroll-behavior: smooth;  
+}  
+.chat-window::-webkit-scrollbar { width: 5px; }  
+.chat-window::-webkit-scrollbar-track { background: transparent; }  
+.chat-window::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }  
 
-<div class="chat-window" id="chatWindow"></div>
-<div class="quick-replies" id="quickReplies"></div>
+/* ===== MESSAGES ===== */  
+.msg { display: flex; gap: 10px; animation: fadeUp .3s ease; }  
+@keyframes fadeUp {  
+  from { opacity:0; transform:translateY(10px); }  
+  to   { opacity:1; transform:translateY(0); }  
+}  
+.msg.bot { align-self: flex-start; flex-direction: row; }  
+.msg.user{ align-self: flex-end;   flex-direction: row-reverse; }  
 
-<div class="input-bar">
-  <input type="text" id="userInput" placeholder="اكتب رسالتك هنا…" />
-  <button class="send-btn" onclick="handleSend()">➤</button>
-</div>
+.msg-avatar {  
+  width: 36px; height: 36px;  
+  border-radius: 50%;  
+  display: flex; align-items: center; justify-content: center;  
+  font-size: 18px;  
+  flex-shrink: 0;  
+}  
+.msg.bot  .msg-avatar { background: var(--bot-bg); border: 1px solid rgba(124,92,252,.4); }  
+.msg.user .msg-avatar { background: var(--user-bg); }  
 
-<script>
-  const EJS = {
-    publicKey:   "YOUR_PUBLIC_KEY",
-    serviceId:   "YOUR_SERVICE_ID",
-    templateId:  "YOUR_TEMPLATE_ID",
-    managerEmail:"manager@example.com"
-  };
+.msg-bubble {  
+  max-width: 72%;  
+  padding: 12px 16px;  
+  border-radius: var(--radius);  
+  font-size: .95rem;  
+  line-height: 1.65;  
+}  
+.msg.bot  .msg-bubble {  
+  background: var(--bot-bg);  
+  border-radius: var(--radius) var(--radius) var(--radius) 4px;  
+}  
+.msg.user .msg-bubble {  
+  background: var(--user-bg);  
+  color: #fff;  
+  border-radius: var(--radius) var(--radius) 4px var(--radius);  
+}  
 
-  const STORE = {
-    name: "متجر النجمة",
-    phone: "0501234567",
-    address: "الرياض",
-    workingHours: "السبت – الخميس: 9ص – 10م",
-    delivery: "التوصيل خلال 24 ساعة",
-    payment: "دفع عند الاستلام",
-    products: [
-      { name: "عطر الفجر", price: "٢٨٠ ريال", desc: "رجالي" },
-      { name: "عطر الياسمين", price: "٣٢٠ ريال", desc: "نسائي" }
-    ]
-  };
+.msg-time { font-size: .72rem; color: var(--muted); margin-top: 4px; text-align: left; }  
 
-  let state = "greeting";
-  let orderData = {};
+/* ===== QUICK REPLIES ===== */  
+.quick-replies {  
+  display: flex;  
+  flex-wrap: wrap;  
+  gap: 8px;  
+  padding: 0 20px 16px;  
+  background: var(--surface);  
+}  
+.qr-btn {  
+  background: transparent;  
+  border: 1.5px solid var(--accent);  
+  color: var(--accent2);  
+  padding: 8px 18px;  
+  border-radius: 30px;  
+  font-family: 'Tajawal', sans-serif;  
+  font-size: .88rem;  
+  font-weight: 600;  
+  cursor: pointer;  
+  transition: all .2s;  
+}  
+.qr-btn:hover { background: var(--accent); color: #fff; transform: translateY(-1px); }  
 
-  const chatEl = document.getElementById("chatWindow");
-  const qrEl = document.getElementById("quickReplies");
-  const inputEl = document.getElementById("userInput");
+/* ===== INPUT BAR ===== */  
+.input-bar {  
+  width: 100%;  
+  max-width: 680px;  
+  display: flex;  
+  gap: 10px;  
+  padding: 16px 20px;  
+  background: var(--card);  
+  border-radius: 0 0 var(--radius) var(--radius);  
+  border-top: 1px solid rgba(124,92,252,.2);  
+}  
+.input-bar input {  
+  flex: 1;  
+  background: var(--surface);  
+  border: 1.5px solid rgba(124,92,252,.3);  
+  border-radius: 12px;  
+  padding: 10px 16px;  
+  color: var(--text);  
+  font-family: 'Tajawal', sans-serif;  
+  font-size: .95rem;  
+  outline: none;  
+  transition: border .2s;  
+}  
+.input-bar input:focus { border-color: var(--accent); }  
+.input-bar input::placeholder { color: var(--muted); }  
+.send-btn {  
+  background: var(--user-bg);  
+  border: none;  
+  border-radius: 12px;  
+  width: 46px; height: 46px;  
+  cursor: pointer;  
+  display: flex; align-items: center; justify-content: center;  
+  font-size: 20px;  
+  transition: transform .15s, box-shadow .15s;  
+  box-shadow: var(--shadow);  
+}  
+.send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 20px rgba(124,92,252,.45); }  
 
-  emailjs.init(EJS.publicKey);
+/* ===== TYPING INDICATOR ===== */  
+.typing .msg-bubble {  
+  display: flex; gap: 5px; align-items: center; padding: 14px 18px;  
+}  
+.dot { width:8px; height:8px; background:var(--muted); border-radius:50%; animation:bounce .9s infinite; }  
+.dot:nth-child(2) { animation-delay:.18s; }  
+.dot:nth-child(3) { animation-delay:.36s; }  
+@keyframes bounce {  
+  0%,100% { transform:translateY(0); }  
+  40%      { transform:translateY(-6px); }  
+}  
 
-  function appendMsg(role, content) {
-    const div = document.createElement("div");
-    div.innerHTML = content;
-    chatEl.appendChild(div);
-    chatEl.scrollTop = chatEl.scrollHeight;
-  }
+/* ===== FORM INSIDE CHAT ===== */  
+.order-form {  
+  background: var(--card);  
+  border: 1px solid rgba(124,92,252,.3);  
+  border-radius: 14px;  
+  padding: 18px;  
+  display: flex;  
+  flex-direction: column;  
+  gap: 10px;  
+  max-width: 340px;  
+}  
+.order-form h3 { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 4px; }  
+.order-form label { font-size: .82rem; color: var(--muted); margin-bottom: 2px; display: block; }  
+.order-form input,  
+.order-form textarea,  
+.order-form select {  
+  width: 100%;  
+  background: var(--surface);  
+  border: 1px solid rgba(124,92,252,.3);  
+  border-radius: 8px;  
+  padding: 9px 12px;  
+  color: var(--text);  
+  font-family: 'Tajawal', sans-serif;  
+  font-size: .9rem;  
+  outline: none;  
+}  
+.order-form textarea { resize: none; height: 80px; }  
+.order-form .submit-order {  
+  background: var(--user-bg);  
+  border: none;  
+  border-radius: 10px;  
+  padding: 10px;  
+  color: #fff;  
+  font-family: 'Tajawal', sans-serif;  
+  font-size: .95rem;  
+  font-weight: 700;  
+  cursor: pointer;  
+  margin-top: 4px;  
+  transition: opacity .2s;  
+}  
+.order-form .submit-order:hover { opacity: .88; }  
 
-  function handleSend() {
-    const val = inputEl.value;
-    inputEl.value = "";
-    processUserText(val);
-  }
+/* Success card */  
+.success-card {  
+  background: linear-gradient(135deg,#1a3a2a,#0f2318);  
+  border: 1px solid #4ade8066;  
+  border-radius: 14px;  
+  padding: 18px;  
+  max-width: 320px;  
+  text-align: center;  
+}  
+.success-card .icon { font-size: 2.2rem; }  
+.success-card h3 { color: #4ade80; font-size: 1.05rem; margin: 8px 0 4px; }  
+.success-card p  { font-size: .85rem; color: var(--muted); }  
 
-  function processUserText(text) {
-    appendMsg("user", text);
-    appendMsg("bot", "تم استلام رسالتك ✔️");
-  }
+/* ===== PRODUCT CARDS ===== */  
+.product-grid { display: flex; flex-wrap: wrap; gap: 10px; max-width: 400px; }  
+.product-card {  
+  background: var(--card);  
+  border: 1px solid rgba(124,92,252,.25);  
+  border-radius: 12px;  
+  padding: 12px 14px;  
+  min-width: 140px;  
+  flex: 1;  
+}  
+.product-card .p-name { font-weight: 700; font-size: .9rem; }  
+.product-card .p-price { color: var(--gold); font-size: .88rem; margin-top: 4px; font-weight: 600; }  
+.product-card .p-desc { color: var(--muted); font-size: .78rem; margin-top: 3px; }  
 
-  startConversation();
-  function startConversation(){
-    appendMsg("bot","مرحباً بك في المتجر ⭐");
-  }
-</script>
+@media (max-width: 500px) {  
+  .chat-window { height: 420px; }  
+  .msg-bubble { max-width: 84%; }  
+}
 
-</body>
-</html><link rel="stylesheet" href="style.css">
-<script src="script.js"></script>
+  </style>  
+</head>  
+<body>  <!-- HEADER -->  <div class="header">  
+  <div class="header-avatar">🛍️</div>  
+  <div class="header-info">  
+    <h1>متجر النجمة ⭐</h1>  
+    <p><span class="status-dot"></span> متصل الآن — مساعدك الذكي في خدمتك</p>  
+  </div>  
+</div>  <!-- CHAT WINDOW -->  <div class="chat-window" id="chatWindow"></div>  <!-- QUICK REPLIES -->  <div class="quick-replies" id="quickReplies"></div>  <!-- INPUT BAR -->  <div class="input-bar">  
+  <input type="text" id="userInput" placeholder="اكتب رسالتك هنا…" />  
+  <button class="send-btn" onclick="handleSend()" title="إرسال">➤</button>  
+</div>  <!-- ===== EMAILJS CONFIG — عدّل هنا ===== -->  <script>  
+  /* ─── ⚙️  إعدادات EmailJS ─────────────────────────────────────  
+     1. سجّل على https://www.emailjs.com  (مجانًا)  
+     2. أضف Service (Gmail / Outlook …) واحصل على Service ID  
+     3. أنشئ Template واحصل على Template ID  
+     4. من لوحة التحكم احصل على Public Key  
+     ────────────────────────────────────────────────────────── */  
+  const EJS = {  
+    publicKey:   "YOUR_PUBLIC_KEY",     // ← ضع مفتاحك هنا  
+    serviceId:   "YOUR_SERVICE_ID",     // ← معرف الخدمة  
+    templateId:  "YOUR_TEMPLATE_ID",    // ← معرف القالب  
+    managerEmail:"manager@example.com"  // ← إيميل المدير  
+  };  
+  
+  /* ─── بيانات المتجر ──────────────────────────────────────────── */  
+  const STORE = {  
+    name: "متجر النجمة",  
+    phone: "0501234567",  
+    address: "الرياض - حي النزهة - شارع الملك فهد",  
+    workingHours: "السبت – الخميس: 9ص – 10م",  
+    delivery: "التوصيل متاح داخل الرياض خلال 24 ساعة",  
+    payment: "دفع عند الاستلام / تحويل بنكي / مدى / فيزا",  
+    products: [  
+      { name: "عطر الفجر",   price: "٢٨٠ ريال", desc: "رجالي — أودي دو بارفان" },  
+      { name: "عطر الياسمين", price: "٣٢٠ ريال", desc: "نسائي — إيو دو تواليت" },  
+      { name: "عطر الروح",    price: "٤٥٠ ريال", desc: "يونيسكس — بارفان" },  
+      { name: "سيت العود",    price: "٦٥٠ ريال", desc: "هدايا فاخرة — مجموعة ٣ قطع" }  
+    ]  
+  };  
+  
+  /* ─── حالة المحادثة ─────────────────────────────────────────── */  
+  let state = "greeting"; // greeting | main | order_name | order_phone | order_product | order_address | order_notes | confirm  
+  let orderData = {};  
+  const chatEl = document.getElementById("chatWindow");  
+  const qrEl   = document.getElementById("quickReplies");  
+  const inputEl = document.getElementById("userInput");  
+  
+  emailjs.init(EJS.publicKey);  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     HELPERS  
+  ══════════════════════════════════════════════════════════════ */  
+  function now() {  
+    return new Date().toLocaleTimeString("ar-SA", { hour:"2-digit", minute:"2-digit" });  
+  }  
+  
+  function appendMsg(role, content, extraClass="") {  
+    const div = document.createElement("div");  
+    div.className = `msg ${role} ${extraClass}`;  
+    const av = role === "bot" ? "🤖" : "🙂";  
+    div.innerHTML = `  
+      <div class="msg-avatar">${av}</div>  
+      <div>  
+        <div class="msg-bubble">${content}</div>  
+        <div class="msg-time">${now()}</div>  
+      </div>`;  
+    chatEl.appendChild(div);  
+    chatEl.scrollTop = chatEl.scrollHeight;  
+  }  
+  
+  function appendHTML(role, htmlNode) {  
+    const div = document.createElement("div");  
+    div.className = `msg ${role}`;  
+    const av = role === "bot" ? "🤖" : "🙂";  
+    const wrapper = document.createElement("div");  
+    wrapper.innerHTML = `<div class="msg-avatar">${av}</div>`;  
+    const inner = document.createElement("div");  
+    inner.appendChild(htmlNode);  
+    inner.innerHTML += `<div class="msg-time">${now()}</div>`;  
+    div.appendChild(wrapper.querySelector(".msg-avatar"));  
+    div.appendChild(inner);  
+    chatEl.appendChild(div);  
+    chatEl.scrollTop = chatEl.scrollHeight;  
+  }  
+  
+  function showTyping() {  
+    const div = document.createElement("div");  
+    div.className = "msg bot typing";  
+    div.id = "typing";  
+    div.innerHTML = `<div class="msg-avatar">🤖</div>  
+      <div><div class="msg-bubble">  
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>  
+      </div></div>`;  
+    chatEl.appendChild(div);  
+    chatEl.scrollTop = chatEl.scrollHeight;  
+  }  
+  
+  function hideTyping() {  
+    const t = document.getElementById("typing");  
+    if (t) t.remove();  
+  }  
+  
+  function botSay(html, delay=700) {  
+    showTyping();  
+    setTimeout(() => { hideTyping(); appendMsg("bot", html); }, delay);  
+  }  
+  
+  function setQuickReplies(options) {  
+    qrEl.innerHTML = "";  
+    options.forEach(opt => {  
+      const btn = document.createElement("button");  
+      btn.className = "qr-btn";  
+      btn.textContent = opt;  
+      btn.onclick = () => processUserText(opt);  
+      qrEl.appendChild(btn);  
+    });  
+  }  
+  
+  function clearQuickReplies() { qrEl.innerHTML = ""; }  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     FLOW LOGIC  
+  ══════════════════════════════════════════════════════════════ */  
+  function startConversation() {  
+    setTimeout(() => {  
+      appendMsg("bot", `مرحباً بك في <strong>${STORE.name}</strong> 🌟<br>أنا مساعدك الذكي، كيف يمكنني مساعدتك اليوم؟`);  
+      setQuickReplies(["🛍️ عرض المنتجات","⏰ أوقات العمل","📍 عنوان المتجر","📦 سياسة التوصيل","💳 طرق الدفع","🛒 أريد الطلب"]);  
+      state = "main";  
+    }, 500);  
+  }  
+  
+  function processUserText(text) {  
+    clearQuickReplies();  
+    appendMsg("user", text);  
+  
+    const t = text.trim().toLowerCase();  
+  
+    if (state === "main" || state === "greeting") {  
+      if (t.includes("منتج") || t.includes("عرض") || t.includes("بضاعة") || t.includes("catalog") || t.includes("قائمة")) {  
+        showProducts(); return;  
+      }  
+      if (t.includes("وقت") || t.includes("ساعة") || t.includes("دوام") || t.includes("متى")) {  
+        botSay(`⏰ <strong>أوقات الدوام:</strong><br>${STORE.workingHours}`);  
+        setTimeout(() => setQuickReplies(["🛒 أريد الطلب","🔙 القائمة الرئيسية"]), 900);  
+        return;  
+      }  
+      if (t.includes("عنوان") || t.includes("مكان") || t.includes("فين") || t.includes("اين") || t.includes("أين")) {  
+        botSay(`📍 <strong>عنواننا:</strong><br>${STORE.address}<br><br>📞 للتواصل: <strong>${STORE.phone}</strong>`);  
+        setTimeout(() => setQuickReplies(["🛒 أريد الطلب","🔙 القائمة الرئيسية"]), 900);  
+        return;  
+      }  
+      if (t.includes("توصيل") || t.includes("شحن") || t.includes("delivery")) {  
+        botSay(`📦 <strong>سياسة التوصيل:</strong><br>${STORE.delivery}`);  
+        setTimeout(() => setQuickReplies(["🛒 أريد الطلب","🔙 القائمة الرئيسية"]), 900);  
+        return;  
+      }  
+      if (t.includes("دفع") || t.includes("ادفع") || t.includes("فيزا") || t.includes("مدى") || t.includes("بطاقة")) {  
+        botSay(`💳 <strong>طرق الدفع المتاحة:</strong><br>${STORE.payment}`);  
+        setTimeout(() => setQuickReplies(["🛒 أريد الطلب","🔙 القائمة الرئيسية"]), 900);  
+        return;  
+      }  
+      if (t.includes("طلب") || t.includes("اشتري") || t.includes("أشتري") || t.includes("order") || t.includes("شراء")) {  
+        startOrder(); return;  
+      }  
+      if (t.includes("قائمة") || t.includes("رئيسية") || t.includes("رجوع") || t.includes("مساعدة") || t.includes("help")) {  
+        botSay("بالطبع! كيف يمكنني مساعدتك؟ 😊");  
+        setTimeout(() => setQuickReplies(["🛍️ عرض المنتجات","⏰ أوقات العمل","📍 عنوان المتجر","📦 سياسة التوصيل","💳 طرق الدفع","🛒 أريد الطلب"]), 900);  
+        return;  
+      }  
+      // fallback  
+      botSay("عذرًا، لم أفهم سؤالك تمامًا 😅 يمكنك اختيار أحد الخيارات أدناه:");  
+      setTimeout(() => setQuickReplies(["🛍️ عرض المنتجات","⏰ أوقات العمل","📍 عنوان المتجر","📦 سياسة التوصيل","💳 طرق الدفع","🛒 أريد الطلب"]), 900);  
+      return;  
+    }  
+  
+    /* ── مراحل الطلب ── */  
+    if (state === "order_name") {  
+      orderData.name = text;  
+      state = "order_phone";  
+      botSay("ممتاز! 📱 ما رقم جوالك؟");  
+      return;  
+    }  
+    if (state === "order_phone") {  
+      if (!/^[0-9+\s\-]{7,15}$/.test(text)) {  
+        botSay("يبدو أن الرقم غير صحيح، أدخل رقم جوال صحيح من فضلك 📵");  
+        return;  
+      }  
+      orderData.phone = text;  
+      state = "order_product";  
+      showProductsForOrder(); return;  
+    }  
+    if (state === "order_product") {  
+      orderData.product = text;  
+      state = "order_address";  
+      botSay("📍 ما عنوان التوصيل؟ (الحي، الشارع، رقم المبنى)");  
+      return;  
+    }  
+    if (state === "order_address") {  
+      orderData.address = text;  
+      state = "order_notes";  
+      botSay("📝 هل لديك ملاحظات إضافية؟ (أو اكتب <strong>لا</strong> إذا لم يكن لديك)");  
+      return;  
+    }  
+    if (state === "order_notes") {  
+      orderData.notes = (t === "لا" || t === "no" || t === "لا يوجد") ? "لا يوجد" : text;  
+      state = "confirm";  
+      showOrderSummary(); return;  
+    }  
+    if (state === "confirm") {  
+      if (t.includes("تأكيد") || t.includes("نعم") || t.includes("صح") || t.includes("confirm") || t.includes("yes")) {  
+        sendOrderEmail(); return;  
+      }  
+      if (t.includes("إلغاء") || t.includes("الغاء") || t.includes("لا") || t.includes("cancel")) {  
+        state = "main";  
+        botSay("تم إلغاء الطلب. هل تريد البدء من جديد؟ 😊");  
+        setTimeout(() => setQuickReplies(["🛍️ عرض المنتجات","🛒 طلب جديد","🔙 القائمة الرئيسية"]), 900);  
+        return;  
+      }  
+      botSay("اختر <strong>✅ تأكيد الطلب</strong> أو <strong>❌ إلغاء</strong>");  
+      setTimeout(() => setQuickReplies(["✅ تأكيد الطلب","❌ إلغاء"]), 800);  
+    }  
+  }  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     SHOW PRODUCTS  
+  ══════════════════════════════════════════════════════════════ */  
+  function showProducts() {  
+    showTyping();  
+    setTimeout(() => {  
+      hideTyping();  
+      const wrapper = document.createElement("div");  
+      wrapper.style.cssText = "display:flex;flex-direction:column;gap:6px;";  
+      const title = document.createElement("div");  
+      title.innerHTML = "🛍️ <strong>منتجاتنا المتاحة:</strong>";  
+      title.style.marginBottom = "8px";  
+      wrapper.appendChild(title);  
+      const grid = document.createElement("div");  
+      grid.className = "product-grid";  
+      STORE.products.forEach(p => {  
+        const c = document.createElement("div");  
+        c.className = "product-card";  
+        c.innerHTML = `<div class="p-name">✨ ${p.name}</div>  
+          <div class="p-price">${p.price}</div>  
+          <div class="p-desc">${p.desc}</div>`;  
+        grid.appendChild(c);  
+      });  
+      wrapper.appendChild(grid);  
+      appendHTML("bot", wrapper);  
+      setTimeout(() => {  
+        botSay("هل تريد تقديم طلب؟ 🛒");  
+        setTimeout(() => setQuickReplies(["🛒 نعم، أريد الطلب","🔙 القائمة الرئيسية"]), 900);  
+      }, 400);  
+    }, 800);  
+  }  
+  
+  function showProductsForOrder() {  
+    showTyping();  
+    setTimeout(() => {  
+      hideTyping();  
+      const msg = document.createElement("div");  
+      msg.innerHTML = "🛒 اختر المنتج الذي تريده:";  
+      appendHTML("bot", msg);  
+      setTimeout(() => {  
+        setQuickReplies(STORE.products.map(p => `${p.name} — ${p.price}`));  
+      }, 300);  
+    }, 600);  
+  }  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     ORDER FLOW  
+  ══════════════════════════════════════════════════════════════ */  
+  function startOrder() {  
+    orderData = {};  
+    state = "order_name";  
+    botSay("رائع! سنبدأ طلبك الآن 🎉<br>ما اسمك الكريم؟");  
+  }  
+  
+  function showOrderSummary() {  
+    showTyping();  
+    setTimeout(() => {  
+      hideTyping();  
+      const card = document.createElement("div");  
+      card.className = "order-form";  
+      card.innerHTML = `  
+        <h3>📋 ملخص طلبك</h3>  
+        <div style="font-size:.9rem;line-height:2;">  
+          👤 <strong>الاسم:</strong> ${orderData.name}<br>  
+          📱 <strong>الجوال:</strong> ${orderData.phone}<br>  
+          🛍️ <strong>المنتج:</strong> ${orderData.product}<br>  
+          📍 <strong>العنوان:</strong> ${orderData.address}<br>  
+          📝 <strong>ملاحظات:</strong> ${orderData.notes}  
+        </div>  
+        <div style="font-size:.82rem;color:#8b80b8;margin-top:4px;">هل تريد تأكيد هذا الطلب وإرساله؟</div>  
+      `;  
+      appendHTML("bot", card);  
+      setTimeout(() => setQuickReplies(["✅ تأكيد الطلب","❌ إلغاء"]), 400);  
+    }, 700);  
+  }  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     SEND EMAIL  
+  ══════════════════════════════════════════════════════════════ */  
+  function sendOrderEmail() {  
+    clearQuickReplies();  
+    showTyping();  
+  
+    const templateParams = {  
+      to_email:     EJS.managerEmail,  
+      store_name:   STORE.name,  
+      order_id:     "ORD-" + Date.now(),  
+      customer_name:  orderData.name,  
+      customer_phone: orderData.phone,  
+      product:        orderData.product,  
+      address:        orderData.address,  
+      notes:          orderData.notes,  
+      order_time:     new Date().toLocaleString("ar-SA")  
+    };  
+  
+    // إذا لم يتم إعداد EmailJS بعد، نحفظ محليًا ونُخبر المستخدم  
+    const isConfigured = EJS.publicKey !== "YOUR_PUBLIC_KEY";  
+  
+    const doSuccess = () => {  
+      hideTyping();  
+      // حفظ محلي  
+      const orders = JSON.parse(localStorage.getItem("store_orders") || "[]");  
+      orders.push(templateParams);  
+      localStorage.setItem("store_orders", JSON.stringify(orders));  
+  
+      const card = document.createElement("div");  
+      card.className = "success-card";  
+      card.innerHTML = `  
+        <div class="icon">✅</div>  
+        <h3>تم إرسال طلبك بنجاح!</h3>  
+        <p>رقم الطلب: <strong>${templateParams.order_id}</strong></p>  
+        <p style="margin-top:6px;">سيتواصل معك فريقنا على<br><strong>${orderData.phone}</strong> قريبًا</p>  
+      `;  
+      appendHTML("bot", card);  
+      setTimeout(() => {  
+        botSay("شكرًا لتسوقك معنا! 💜 هل تحتاج شيئًا آخر؟");  
+        state = "main";  
+        setTimeout(() => setQuickReplies(["🛍️ عرض المنتجات","📞 تواصل معنا","🔙 القائمة الرئيسية"]), 900);  
+      }, 600);  
+    };  
+  
+    const doFail = (err) => {  
+      hideTyping();  
+      console.error("EmailJS error:", err);  
+      appendMsg("bot", "⚠️ حدث خطأ في الإرسال، لكن تم حفظ طلبك. سنتواصل معك قريبًا!");  
+      // حفظ محلي حتى في حالة الخطأ  
+      const orders = JSON.parse(localStorage.getItem("store_orders") || "[]");  
+      orders.push(templateParams);  
+      localStorage.setItem("store_orders", JSON.stringify(orders));  
+      state = "main";  
+      setTimeout(() => setQuickReplies(["🔙 القائمة الرئيسية"]), 900);  
+    };  
+  
+    if (isConfigured) {  
+      emailjs.send(EJS.serviceId, EJS.templateId, templateParams)  
+        .then(doSuccess)  
+        .catch(doFail);  
+    } else {  
+      // وضع تجريبي بدون EmailJS  
+      setTimeout(() => {  
+        doSuccess();  
+        console.log("📧 [وضع تجريبي] بيانات الطلب:", templateParams);  
+      }, 1200);  
+    }  
+  }  
+  
+  /* ═══════════════════════════════════════════════════════════  
+     EVENTS  
+  ══════════════════════════════════════════════════════════════ */  
+  function handleSend() {  
+    const val = inputEl.value.trim();  
+    if (!val) return;  
+    inputEl.value = "";  
+    processUserText(val);  
+  }  
+  
+  inputEl.addEventListener("keydown", e => { if (e.key === "Enter") handleSend(); });  
+  
+  /* ── START ── */  
+  startConversation();  
+</script>  </body>  
+</html>  
