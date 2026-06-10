@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>متجر النجمة - شات بوت</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-avatar">🛍️</div>
+  <div class="header-info">
+    <h1>متجر النجمة ⭐</h1>
+    <p><span class="status-dot"></span> متصل الآن — مساعدك الذكي في خدمتك</p>
+  </div>
+</div>
+
+<div class="chat-window" id="chatWindow"></div>
+<div class="quick-replies" id="quickReplies"></div>
+
+<div class="input-bar">
+  <input type="text" id="userInput" placeholder="اكتب رسالتك هنا…" />
+  <button class="send-btn" onclick="handleSend()">➤</button>
+</div>
+
+<script>
+  const EJS = {
+    publicKey:   "YOUR_PUBLIC_KEY",
+    serviceId:   "YOUR_SERVICE_ID",
+    templateId:  "YOUR_TEMPLATE_ID",
+    managerEmail:"manager@example.com"
+  };
+
+  const STORE = {
+    name: "متجر النجمة",
+    phone: "0501234567",
+    address: "الرياض",
+    workingHours: "السبت – الخميس: 9ص – 10م",
+    delivery: "التوصيل خلال 24 ساعة",
+    payment: "دفع عند الاستلام",
+    products: [
+      { name: "عطر الفجر", price: "٢٨٠ ريال", desc: "رجالي" },
+      { name: "عطر الياسمين", price: "٣٢٠ ريال", desc: "نسائي" }
+    ]
+  };
+
+  let state = "greeting";
+  let orderData = {};
+
+  const chatEl = document.getElementById("chatWindow");
+  const qrEl = document.getElementById("quickReplies");
+  const inputEl = document.getElementById("userInput");
+
+  emailjs.init(EJS.publicKey);
+
+  function appendMsg(role, content) {
+    const div = document.createElement("div");
+    div.innerHTML = content;
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function handleSend() {
+    const val = inputEl.value;
+    inputEl.value = "";
+    processUserText(val);
+  }
+
+  function processUserText(text) {
+    appendMsg("user", text);
+    appendMsg("bot", "تم استلام رسالتك ✔️");
+  }
+
+  startConversation();
+  function startConversation(){
+    appendMsg("bot","مرحباً بك في المتجر ⭐");
+  }
+</script>
+
+</body>
+</html><link rel="stylesheet" href="style.css">
+<script src="script.js"></script>
